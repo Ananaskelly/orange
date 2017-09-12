@@ -1,14 +1,16 @@
 import cv2
 import numpy as np
+from matplotlib import pyplot as plt
 
 
-path = 'D:\\visionhack\\trainset\\trainset'
+
+path = 'C:/Users/janch/Desktop/trainset/'
 filename = '\\akn.395.047.left.avi'
 
 cap = cv2.VideoCapture(path + filename)
 # hog = cv2.HOGDescriptor()
 
-for i in range(180):
+for i in range(189):
     ret, frame = cap.read()
 width = frame.shape[1]
 roi_width = int(width*0.5)
@@ -56,14 +58,41 @@ frame = img2
 # cv2.imshow("inp", frame)
 # frame = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
 
-# frame = cv2.GaussianBlur(frame, (3, 3), 0)
+frame = cv2.GaussianBlur(frame, (3, 3), 0)
 
 cv2.imshow("lol", frame)"""
 frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+frame = cv2.GaussianBlur(frame, (1, 1), 0)
+th1 = cv2.inRange(frame, 0, 50)
+# closing = cv2.morphologyEx(th1, cv2.MORPH_CLOSE, (3, 3))
+# opening = cv2.morphologyEx(closing, cv2.MORPH_OPEN, (3, 3))
+# cv2.imshow('close open', opening)
+# cv2.imshow('classic', th1)
+# cv2.imshow('close', closing)
 th2 = cv2.adaptiveThreshold(frame,255,cv2.ADAPTIVE_THRESH_MEAN_C,\
-            cv2.THRESH_BINARY,5,10)
+            cv2.THRESH_BINARY_INV,5,10)
+
+closing = cv2.morphologyEx(th2, cv2.MORPH_CLOSE, (3, 3))
+opening = cv2.morphologyEx(closing, cv2.MORPH_OPEN, (3, 3))
+# cv2.imshow('close open', opening)
+# cv2.imshow('classic', th1)
+# cv2.imshow('close', closing)
+edges = cv2.Canny(th2, 0, 1)
+# cv2.imshow('edges', edges)
+########################################################3
+#lines
+
+linesp = cv2.HoughLinesP(th2, 50, theta=np.pi/2, threshold=100, minLineLength=50, maxLineGap=5)
+lines = cv2.HoughLines(image=th2, rho=50, theta=np.pi/2, threshold=100)
+print(lines.shape)
+for x in range(0, len(lines)):
+    for x1,y1,x2,y2 in lines[x]:
+        cv2.line(frame,(x1,y1),(x2,y2),(0,0,0),1)
+
+cv2.imshow('result', frame)
+#########################################################
 cv2.imshow('th2', th2)
-edges = cv2.Canny(frame, 150, 250)
+edges = cv2.Canny(closing, 150, 250)
 edges = cv2.dilate(edges, np.ones((3,3), dtype='uint8'),iterations = 1)
 cv2.imshow("lol", edges)
 edges =cv2.bitwise_not(th2)
@@ -91,13 +120,17 @@ cv2.imshow('out', frame)"""
 #edges = cv2.bitwise_not(edges)
 #cv2.imshow("a", edges)
 
-lines = cv2.HoughLinesP(edges, 1, np.pi/360, threshold=50, minLineLength=10, maxLineGap=5)
-print(lines.shape)
-for x in range(0, len(lines)):
-    for x1,y1,x2,y2 in lines[x]:
-        cv2.line(frame,(x1,y1),(x2,y2),(0,255,0),1)
+# nasta's lines
 
-cv2.imshow('result', frame)
+# lines = cv2.HoughLinesP(edges, 1, np.pi/360, threshold=50, minLineLength=10, maxLineGap=5)
+# print(lines.shape)
+# for x in range(0, len(lines)):
+#     for x1,y1,x2,y2 in lines[x]:
+#         cv2.line(frame,(x1,y1),(x2,y2),(0,255,0),1)
+#
+# cv2.imshow('result', frame)
+
+
 # sobelx = cv2.Sobel(frame, cv2.CV_64F, 1, 0, ksize=15)
 # sobely = cv2.Sobel(frame, cv2.CV_64F, 0, 1, ksize=15)
 
