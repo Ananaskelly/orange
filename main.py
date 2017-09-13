@@ -6,14 +6,14 @@ from matplotlib import pyplot as plt
 from pylab import *
 
 # constants
-text_file = 'C:/Users/janch/PycharmProjects/orange/output_val1.txt'
+text_file = 'C:/Users/janch/PycharmProjects/orange/output_val10.txt'
 start_time = time.time()
 directory = 'D:/visionhack/validationset/'
 r = re.compile(".*avi")
 files = filter(r.match, [f for f in os.listdir(directory)])
 
 lower_blue = np.array([70, 0, 0], dtype="uint8")  # 198, 110
-upper_blue = np.array([255, 70, 20], dtype="uint8")
+upper_blue = np.array([255, 80, 20], dtype="uint8")
 
 
 def grscl(img):
@@ -22,6 +22,22 @@ def grscl(img):
 
 def rs(img):
     return cv2.resize(img, (800, 600))
+
+
+
+def h_cascade(img, cascade='C:/Users/janch/Desktop/vh_templates/HAAR/haarcascade/cascade.xml'):
+    blue_mask(img)
+    epsarea = [130,130]
+    area = [100**2, 130**2]
+    detector = cv2.CascadeClassifier(cascade)
+    rects = detector.detectMultiScale(img, scaleFactor=1.3,
+                                      minNeighbors=10, minSize=(100, 100))
+    for (i, (x, y, w, h)) in enumerate(rects):
+        if area[0] <= w*h <= area[1]:
+            cv2.rectangle(img, (x, y), (x + w, y + h), (0, 0, 255), 2)
+            if img.shape[1] - x+w < 300:
+                print('tololololland')
+    cv2.imshow("sign", rs(img))
 
 
 def persp_transformation(img):
@@ -125,6 +141,7 @@ def histogram(img, firsts, seconds, frame_number):
             print('trololololo')
             return 1
 
+    return 0
     # for hists in hist_full:
     #     enumerate([hists[0] > 1000])
     # enumerate(hist_full> 1000)
@@ -143,21 +160,39 @@ def histogram(img, firsts, seconds, frame_number):
 
 
 def blue_mask(img):
-    kernel = np.ones((80,80),np.uint8)
-
-    mask_blue = cv2.inRange(cv2.medianBlur(img, 5), lower_blue, upper_blue)
-
+    kernel = np.ones((60, 60), np.uint8)
+    try:
+        mask_blue = cv2.inRange(cv2.medianBlur(img, 5), lower_blue, upper_blue)
+    except:
+        return 0
     ret, thresh = cv2.threshold(mask_blue, 127, 255, cv2.THRESH_BINARY)
-    cv2.imshow('thresh', rs(thresh))
-    threshed =cv2.dilate(thresh, kernel, iterations=1)
+    threshed = cv2.dilate(thresh, kernel, iterations=1)
+    im2, contours, hierarchy = cv2.findContours(threshed, 1, 2)
+    for cnt in contours:
+        x,y,w,h = cv2.boundingRect(cnt)
+        cv2.rectangle(img, (x, y), (x + w, y + h), (0, 255, 0), 2)
 
 
     masked = cv2.bitwise_and(img, img, mask=threshed)
+
+    if len(mask_blue_mass) < 3:  # задержка в кадрах перед исчезновением красной области
+        mask_blue_mass.append(masked)
+    else:
+        mask_blue_mass.pop(0)
+        mask_blue_mass.append(masked)
+
+    sum_rmask = masked
+    if len(mask_blue_mass) > 0:
+        for bmask in mask_blue_mass:
+            sum_rmask = cv2.addWeighted(bmask, 0.5, sum_rmask, 1, 1)
+    cv2.imshow('summ_rmask', rs(sum_rmask))
+
+
     # _, contours_blue, hierarchy = cv2.findContours(masked, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
     cv2.imshow('blue', rs(masked))
     # corners
-    edges = cv2.Canny(grscl(masked), 0, 255)
-    cv2.imshow('canny', rs(edges))
+    # edges = cv2.Canny(grscl(masked), 0, 255)
+    # cv2.imshow('canny', rs(edges))
     # blue_areas = [cv2.boundingRect(cbl) for cbl in contours_blue]
     return masked
 
@@ -171,22 +206,28 @@ def processing(capture):
         try:
             if frame_count % frame_skip == 0:
                     ret, frame = capture.read()
+        except:
+            return '000000'
+
+        if frame_count >= 298:
+            break
+
             # cv2.imshow('transformed', rs(persp_transformation(frame)[0]))
             # cv2.imshow('frame', rs(frame))
-            if histogram(frame, firsts, seconds, frame_count) == 1:
-                print(file)
-                return '100000'
+            # if histogram(frame, firsts, seconds, frame_count) == 1:
+            #     print(file)
+            #     return '100000'
                 # break
             # plt.close()
             # plt.ion()
             # blue_mask(frame)
             # temp_matchin(blue_mask(frame))
-            frame_count += 1
-            if cv2.waitKey(1) & 0xFF == ord('q'):
-                print(-1)
-                break
-        except:
-            return '000000'
+        h_cascade(frame)
+        frame_count += 1
+        if cv2.waitKey(1) & 0xFF == ord('q'):
+            print(-1)
+            break
+
 
 
 for file in files:
@@ -194,7 +235,7 @@ for file in files:
     filepath = (directory + file)
     cap = cv2.VideoCapture(filepath)
     start_ret, start_frame = cap.read()
-
+    mask_blue_mass = []
     out = processing(cap)
     with open(text_file, 'a') as text:
         text.write("%s %s \n" % (file, out))
