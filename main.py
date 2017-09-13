@@ -2,11 +2,13 @@ import numpy as np
 import cv2
 import time
 import os, re
-from matplotlib import pyplot as plt
-from pylab import *
+# from matplotlib import pyplot as plt
+# from pylab import *
 
-# constants
-text_file = 'C:/Users/janch/PycharmProjects/orange/output_val10.txt'
+# globals()
+bridge = 0
+bump = 0
+text_file = 'C:/Users/janch/PycharmProjects/orange/output_val12.txt'
 start_time = time.time()
 directory = 'D:/visionhack/validationset/'
 r = re.compile(".*avi")
@@ -24,20 +26,23 @@ def rs(img):
     return cv2.resize(img, (800, 600))
 
 
-
-def h_cascade(img, cascade='C:/Users/janch/Desktop/vh_templates/HAAR/haarcascade/cascade.xml'):
-    blue_mask(img)
-    epsarea = [130,130]
+def h_cascade(img, orig, cascade='C:/Users/janch/Desktop/vh_templates/HAAR/haarcascade/cascade.xml'):
+    # blue_mask(img)
+    # epsarea = [130,130]
     area = [100**2, 130**2]
     detector = cv2.CascadeClassifier(cascade)
     rects = detector.detectMultiScale(img, scaleFactor=1.3,
-                                      minNeighbors=10, minSize=(100, 100))
+                                      minNeighbors=10, minSize=(10, 10))
+    # if len(rects) > 0:
+    #     return 1
     for (i, (x, y, w, h)) in enumerate(rects):
         if area[0] <= w*h <= area[1]:
-            cv2.rectangle(img, (x, y), (x + w, y + h), (0, 0, 255), 2)
-            if img.shape[1] - x+w < 300:
-                print('tololololland')
-    cv2.imshow("sign", rs(img))
+            cv2.rectangle(orig, (x, y), (x + w, y + h), (0, 0, 255), 2)
+            return 1
+    return 0
+            # if img.shape[1] - x+w < 300:
+            #     print('tololololland')
+    # cv2.imshow("sign", rs(img))
 
 
 def persp_transformation(img):
@@ -66,40 +71,40 @@ def persp_transformation(img):
     return warped_img, inverse_persp_transform  # warped_img is the result we need
 
 
-def temp_matchin(img):
-    # plt.ion()
-    img2 = img.copy()
-    template = cv2.imread('C:/Users/janch/Desktop/vh_templates/created/walkin_man.jpg', 1)
-    # w, h = template.shape[::-1]
-    h = template.shape[0]
-    w = template.shape[1]
-    img = img2.copy()
-    method = cv2.TM_CCOEFF
-    # Apply template Matching
-    res = cv2.matchTemplate(img, template, method)
-    min_val, max_val, min_loc, max_loc = cv2.minMaxLoc(res)
+# def temp_matchin(img):
+#     # plt.ion()
+#     img2 = img.copy()
+#     template = cv2.imread('C:/Users/janch/Desktop/vh_templates/created/walkin_man.jpg', 1)
+#     # w, h = template.shape[::-1]
+#     h = template.shape[0]
+#     w = template.shape[1]
+#     img = img2.copy()
+#     method = cv2.TM_CCOEFF
+#     # Apply template Matching
+#     res = cv2.matchTemplate(img, template, method)
+#     min_val, max_val, min_loc, max_loc = cv2.minMaxLoc(res)
+#
+#     # If the method is TM_SQDIFF or TM_SQDIFF_NORMED, take minimum
+#     if method in [cv2.TM_SQDIFF, cv2.TM_SQDIFF_NORMED]:
+#         top_left = min_loc
+#     else:
+#         top_left = max_loc
+#     bottom_right = (top_left[0] + w, top_left[1] + h)
+#
+#     cv2.rectangle(img, top_left, bottom_right, 255, 2)
+#
+#     # plt.subplot(121), plt.imshow(res, cmap='gray')
+#     # plt.title('Matching Result'), plt.xticks([]), plt.yticks([])
+#     # plt.subplot(122), plt.imshow(img, cmap='gray')
+#     # plt.title('Detected Point'), plt.xticks([]), plt.yticks([])
+#     # plt.suptitle(method)
+#     cv2.imshow('rected', rs(img))
+#     # plt.show()
+#     # plt.close(1)
 
-    # If the method is TM_SQDIFF or TM_SQDIFF_NORMED, take minimum
-    if method in [cv2.TM_SQDIFF, cv2.TM_SQDIFF_NORMED]:
-        top_left = min_loc
-    else:
-        top_left = max_loc
-    bottom_right = (top_left[0] + w, top_left[1] + h)
 
-    cv2.rectangle(img, top_left, bottom_right, 255, 2)
-
-    # plt.subplot(121), plt.imshow(res, cmap='gray')
-    # plt.title('Matching Result'), plt.xticks([]), plt.yticks([])
-    # plt.subplot(122), plt.imshow(img, cmap='gray')
-    # plt.title('Detected Point'), plt.xticks([]), plt.yticks([])
-    # plt.suptitle(method)
-    cv2.imshow('rected', rs(img))
-    # plt.show()
-    # plt.close(1)
-
-
-def epsareas(blue_contours, img):
-    black = np.zeros([img.shape[:2][0], img.shape[:2][1], 1], dtype="uint8")
+# def epsareas(blue_contours, img):
+#     black = np.zeros([img.shape[:2][0], img.shape[:2][1], 1], dtype="uint8")
 
 
 def histogram(img, firsts, seconds, frame_number):
@@ -160,44 +165,59 @@ def histogram(img, firsts, seconds, frame_number):
 
 
 def blue_mask(img):
+    black = np.zeros([img.shape[:2][0], img.shape[:2][1], 1], dtype="uint8")
     kernel = np.ones((60, 60), np.uint8)
     try:
-        mask_blue = cv2.inRange(cv2.medianBlur(img, 5), lower_blue, upper_blue)
+        mask_blue = cv2.inRange(img, lower_blue, upper_blue)
+        # mask_blue = cv2.inRange(cv2.medianBlur(img, 5), lower_blue, upper_blue)
     except:
         return 0
-    ret, thresh = cv2.threshold(mask_blue, 127, 255, cv2.THRESH_BINARY)
+    thresh = mask_blue
+    # ret, thresh = cv2.threshold(mask_blue, 127, 255, cv2.THRESH_BINARY)
     threshed = cv2.dilate(thresh, kernel, iterations=1)
     im2, contours, hierarchy = cv2.findContours(threshed, 1, 2)
-    for cnt in contours:
+    areas_space = [cv2.contourArea(c) for c in contours]
+    ind_big_spaces = [i for i, x in enumerate(areas_space) if x > 30]  # площадь максимально маленькой области
+    bareas = [contours[ind] for ind in ind_big_spaces]
+
+    for cnt in bareas:
         x,y,w,h = cv2.boundingRect(cnt)
-        cv2.rectangle(img, (x, y), (x + w, y + h), (0, 255, 0), 2)
+        # rect = img[x: x + w, y: y + h]
+        black = cv2.rectangle(black, (x, y),
+                                     (x + w , y + h), (255, 255, 255), -1)
+        # cv2.rectangle(img, (x, y), (x + w, y + h), (0, 255, 0), 2)
+    masked = cv2.bitwise_and(img, img, mask=black)
+    # cv2.imshow('rected', rs(masked))
+
+    # masked = cv2.bitwise_and(img, img, mask=threshed)
 
 
-    masked = cv2.bitwise_and(img, img, mask=threshed)
-
-    if len(mask_blue_mass) < 3:  # задержка в кадрах перед исчезновением красной области
-        mask_blue_mass.append(masked)
-    else:
-        mask_blue_mass.pop(0)
-        mask_blue_mass.append(masked)
-
-    sum_rmask = masked
-    if len(mask_blue_mass) > 0:
-        for bmask in mask_blue_mass:
-            sum_rmask = cv2.addWeighted(bmask, 0.5, sum_rmask, 1, 1)
-    cv2.imshow('summ_rmask', rs(sum_rmask))
+    # if len(mask_blue_mass) < 3:  # задержка в кадрах перед исчезновением красной области
+    #     mask_blue_mass.append(masked)
+    # else:
+    #     mask_blue_mass.pop(0)
+    #     mask_blue_mass.append(masked)
+    #
+    # sum_rmask = masked
+    # if len(mask_blue_mass) > 0:
+    #     for bmask in mask_blue_mass:
+    #         sum_rmask = cv2.addWeighted(bmask, 0.5, sum_rmask, 1, 1)
+    # cv2.imshow('summ_rmask', rs(sum_rmask))
 
 
     # _, contours_blue, hierarchy = cv2.findContours(masked, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
-    cv2.imshow('blue', rs(masked))
+    # cv2.imshow('blue', rs(masked))
     # corners
     # edges = cv2.Canny(grscl(masked), 0, 255)
     # cv2.imshow('canny', rs(edges))
     # blue_areas = [cv2.boundingRect(cbl) for cbl in contours_blue]
-    return masked
+    return h_cascade(masked, img)
 
 
 def processing(capture):
+    # globals()
+    bridge = 0
+    bump =0
     frame_skip = 1
     frame_count = capture.get(cv2.CAP_PROP_POS_FRAMES)
     firsts = []
@@ -206,36 +226,52 @@ def processing(capture):
         try:
             if frame_count % frame_skip == 0:
                     ret, frame = capture.read()
+                    if bump == 0:
+                        if blue_mask(frame) == 1:
+                            bump = 1
+                    if bridge == 0:
+                        if histogram(frame, firsts, seconds, frame_count) == 1:
+                            bridge = 1
+                    cv2.imshow('frame', rs(frame))
+            frame_count += 1
         except:
-            return '000000'
+            print('first_try')
+            return '%s0000%s' % (bridge, bump)
 
-        if frame_count >= 298:
-            break
+        # if frame_count >= 298:
+        #     break
+            #####################
 
+            # print(file)
+            # return '100000'
+        # else:
+        #     return '000000'
+            ##########################
+            # break
             # cv2.imshow('transformed', rs(persp_transformation(frame)[0]))
             # cv2.imshow('frame', rs(frame))
-            # if histogram(frame, firsts, seconds, frame_count) == 1:
-            #     print(file)
-            #     return '100000'
-                # break
+
             # plt.close()
             # plt.ion()
             # blue_mask(frame)
             # temp_matchin(blue_mask(frame))
-        h_cascade(frame)
-        frame_count += 1
+        # h_cascade(frame)
         if cv2.waitKey(1) & 0xFF == ord('q'):
             print(-1)
             break
-
+        # return '%s0000%s' % (bridge, zebra)
+    return '%s0000%s' % (bridge, bump)
 
 
 for file in files:
-
+    globals()
+    # bridge = 0
+    # bump = 0
     filepath = (directory + file)
     cap = cv2.VideoCapture(filepath)
     start_ret, start_frame = cap.read()
-    mask_blue_mass = []
+    # mask_blue_mass = []
+
     out = processing(cap)
     with open(text_file, 'a') as text:
         text.write("%s %s \n" % (file, out))
