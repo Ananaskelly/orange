@@ -4,16 +4,13 @@ import math
 import copy
 import recognition.recognition as rec
 
-# test staff
-# path = 'D:\\visionhack\\trainset\\trainset'
-# filename = '\\akn.431.139.left.avi'
 
 # delta bound between contours in frames
 delta_bound = 20
 border = 0
 lower = np.array([86, 31, 4], dtype='uint8')
 upper = np.array([220, 88, 50], dtype='uint8')
-kernel = np.ones((15, 15), np.uint8)
+kernel = np.ones((19, 19), np.uint8)
 
 
 # get angle between crossing lines
@@ -37,12 +34,16 @@ class FuckingContour:
         self.data = array
         self.data_bounds = bounds
         self.storage = []
+        self.delay = 0
 
 
 def blue_mask(frame, current_tracked, current_values):
 
     mask = cv2.inRange(frame, lower, upper)
     dilated_mask = cv2.dilate(mask, kernel, iterations=1)
+    dilated_mask = cv2.medianBlur(dilated_mask, 5)
+
+    # cv2.imshow("masked", cv2.resize(dilated_mask, (800, 640)))
 
     im2, contours, hierarchy = cv2.findContours(dilated_mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
 
@@ -64,8 +65,8 @@ def blue_mask(frame, current_tracked, current_values):
                 w = max(X) - min(X)
                 h = max(Y) - min(Y)
                 if abs(angle_1 - 90) < 10 and abs(angle_2 - 90) < 10 and 0.8 < h / w < 1.2:
-                    # cv2.drawContours(frame, [approx], 0, (0, 255, 255), 10)
                     fc = FuckingContour(frame[min(Y):min(Y)+h, min(X):min(X)+w], [min(X), min(Y), w, h])
+                    cv2.drawContours(frame, [approx], 0, (0, 255, 255), 10)
                     current_tracked.append(fc)
     else:
         for contour in contours:
@@ -82,7 +83,7 @@ def blue_mask(frame, current_tracked, current_values):
                 Y = [row[1] for row in simplify_approx]
                 w = max(X) - min(X)
                 h = max(Y) - min(Y)
-                if abs(angle_1 - 90) < 10 and abs(angle_2 - 90) < 10 and 0.5 < h / w < 1.5:
+                if abs(angle_1 - 90) < 10 and abs(angle_2 - 90) < 10 and 0.8 < h / w < 1.2:
                     # obj = frame[min(Y):max(Y), min(X):max(X)]
                     # num = rec.get_class_no(obj)
                     flag = False
@@ -92,7 +93,7 @@ def blue_mask(frame, current_tracked, current_values):
                                 < delta_bound:
                             candidates.remove(candidate)
                             new_image = candidate.data
-                            # cv2.drawContours(frame, [approx], 0, (255, 255, 255), 10)
+                            candidate.delay = 0
                             candidate.storage.append(new_image)
                             curr_length = len(candidate.storage)
                             # little clean up
@@ -101,12 +102,17 @@ def blue_mask(frame, current_tracked, current_values):
                             candidate.data = frame[min(Y):min(Y)+h, min(X):min(X)+w]
                             candidate.data_bounds = [min(X), min(Y), w, h]
                             current_tracked.append(candidate)
+                            cv2.drawContours(frame, [approx], 0, (255, 255, 255), 10)
                             flag = True
                             break
                     if not flag:
                         fc = FuckingContour(frame[min(Y):min(Y) + h, min(X):min(X) + w], [min(X), min(Y), w, h])
                         current_tracked.append(fc)
         for candidate in candidates:
+            if candidate.delay < 2:
+                candidate.delay += 1
+                current_tracked.append(candidate)
+                continue
             if len(candidate.storage) < 2:
                 continue
             ind = min(len(candidate.storage) - 1, 5)
@@ -117,12 +123,15 @@ def blue_mask(frame, current_tracked, current_values):
             # print(rt.shape)
             if h < 45 or w < 45 or np.std(rt) < 30:
                 continue
-            num = rec.get_class_no(rt)
+            num, p = rec.get_class_no(rt)
 
-            # cv2.imshow(str(num), rt)
-            # cv2.waitKey()
+            if p < 0.98:
+                continue
+
+            cv2.imshow(str(num), rt)
+            cv2.waitKey()
             current_values.append(num)
 
-    # cv2.imshow("orig", cv2.resize(frame, (800, 640)))
-    # cv2.waitKey(1)
+    cv2.imshow("orig", cv2.resize(frame, (400, 320)))
+    cv2.waitKey(1)
     return current_tracked, current_values
