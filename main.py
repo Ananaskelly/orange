@@ -18,7 +18,7 @@ r = re.compile(".*avi")
 files = filter(r.match, [f for f in os.listdir(directory)])
 # files = enumerate(files)
 
-####optical flow parametrs####################################################
+####__optical flow parametrs__####
 
 old_gray_frame = 0
 p0 = 0
@@ -36,7 +36,7 @@ lk_params = dict(winSize=(50, 50),
 color = np.random.randint(0, 255, (100, 3))
 
 
-##############################################################################
+####################################
 
 lower_blue = np.array([70, 0, 0], dtype="uint8")  # 198, 110
 upper_blue = np.array([255, 80, 20], dtype="uint8")
@@ -50,29 +50,7 @@ def rs(img):
     return cv2.resize(img, (800, 600))
 
 
-'''def h_cascade(img, orig, cascade='C:/Users/janch/Desktop/vh_templates/HAAR/haarcascade/cascade.xml'):
-    # blue_mask(img)
-    # epsarea = [130,130]
-    area = [90**2, 130**2]
-    detector = cv2.CascadeClassifier(cascade)
-    rects = detector.detectMultiScale(img, scaleFactor=1.3,
-                                      minNeighbors=10, minSize=(10, 10))
-    if len(rects) > 0:
-        x, y, w, h = rects[0]
-        if area[0] <= w * h <= area[1]:
-            cv2.imwrite('trainset/bump/%s.jpg' % file, orig[y:y + h, x:x + w])
-            cv2.rectangle(orig, (x, y), (x + w, y + h), (0, 0, 255), 2)
-            return 1
-    # for (i, (x, y, w, h)) in enumerate(rects):
-    #     if area[0] <= w*h <= area[1]:
-    #         cv2.rectangle(orig, (x, y), (x + w, y + h), (0, 0, 255), 2)
-    #         cv2.imwrite('trainset/%s' % file, orig[x:x+w, y:y+h])
-    #         return 1
-    # return 0
-            # if img.shape[1] - x+w < 300:
-            #     print('tololololland')
-    # cv2.imshow("sign", rs(img))
-'''
+
 
 '''def persp_transformation(img):
     x = img.shape[1]
@@ -247,59 +225,6 @@ def bridge_tunnel(img, firsts, seconds, frame_number):
     return 0
 
 
-'''def blue_mask(img):
-    black = np.zeros([img.shape[:2][0], img.shape[:2][1], 1], dtype="uint8")
-    kernel = np.ones((50,50), np.uint8)
-    try:
-        mask_blue = cv2.inRange(img, lower_blue, upper_blue)
-        # mask_blue = cv2.inRange(cv2.medianBlur(img, 5), lower_blue, upper_blue)
-    except:
-        return 0
-    thresh = mask_blue
-    # ret, thresh = cv2.threshold(mask_blue, 127, 255, cv2.THRESH_BINARY)
-    threshed = cv2.dilate(thresh, kernel, iterations=1)
-    im2, contours, hierarchy = cv2.findContours(threshed, 1, 2)
-    areas_space = [cv2.contourArea(c) for c in contours]
-    ind_big_spaces = [i for i, x in enumerate(areas_space) if x > 30]  # площадь максимально маленькой области
-    bareas = [contours[ind] for ind in ind_big_spaces]
-
-    for cnt in bareas:
-        x,y,w,h = cv2.boundingRect(cnt)
-        # rect = img[x: x + w, y: y + h]
-        black = cv2.rectangle(black, (x, y),
-                                     (x + w , y + h), (255, 255, 255), -1)
-        # cv2.rectangle(img, (x, y), (x + w, y + h), (0, 255, 0), 2)
-    masked = cv2.bitwise_and(img, img, mask=black)
-    # cv2.imshow('rected', rs(masked))
-
-    # masked = cv2.bitwise_and(img, img, mask=threshed)
-
-
-    # if len(mask_blue_mass) < 3:  # задержка в кадрах перед исчезновением красной области
-    #     mask_blue_mass.append(masked)
-    # else:
-    #     mask_blue_mass.pop(0)
-    #     mask_blue_mass.append(masked)
-    #
-    # sum_rmask = masked
-    # if len(mask_blue_mass) > 0:
-    #     for bmask in mask_blue_mass:
-    #         sum_rmask = cv2.addWeighted(bmask, 0.5, sum_rmask, 1, 1)
-    # cv2.imshow('summ_rmask', rs(sum_rmask))
-
-
-    # _, contours_blue, hierarchy = cv2.findContours(masked, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
-    # cv2.imshow('blue', rs(masked))
-    # corners
-    # edges = cv2.Canny(grscl(masked), 0, 255)
-    # cv2.imshow('canny', rs(edges))
-    # blue_areas = [cv2.boundingRect(cbl) for cbl in contours_blue]
-    # return (h_cascade(masked, img),
-    #         h_cascade(masked, img, cascade='C:/Users/janch/Desktop/vh_templates/HAAR/haarcascade_cross/cascade.xml'))
-    return h_cascade(masked, img)
-'''
-
-
 def processing(capture):
     frame_count = capture.get(cv2.CAP_PROP_POS_FRAMES)
     global p0, old_gray_frame, searchin_charcts
@@ -328,15 +253,6 @@ def processing(capture):
                     if frame_count % 70 == 0:
                         old_gray_frame = 0
                         p0 = 0
-
-                    # frame = rs(frame)
-                    # if bump == 0 or zebra == 0:
-                    #     bump, zebra = blue_mask(frame)
-                    # BUUUMP
-                    # if bump == 0:
-                    #     if blue_mask(frame) == 1:
-                    #         bump = 1
-
                     if bridge == 0:
                         if bridge_tunnel(frame, firsts, seconds, frame_count) == 1:
                             bridge = 1
@@ -359,8 +275,6 @@ for file in files:
     filepath = (directory + file)
     cap = cv2.VideoCapture(filepath)
     start_ret, start_frame = cap.read()
-    # mask_blue_mass = []
-
     out = processing(cap)
     with open(text_file, 'a') as text:
         text.write("%s %s \n" % (file, out))
