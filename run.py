@@ -3,6 +3,8 @@ import re
 import os
 import time
 
+import detect_sign as detector
+
 
 directory = 'D:\\visionhack\\trainset\\trainset\\'
 r = re.compile(".*avi")
@@ -19,12 +21,21 @@ def processing(cap):
     road_bump = '0'
     screen_wipers = '0'
     zebra = '0'
+    current_tracked = []
+    current_values = []
     while cap.isOpened():
-        if frame_count % frame_skip != 0:
-            continue
         ret, frame = cap.read()
         if frame is None:
             break
+
+        current_tracked, current_values = detector.blue_mask(frame, current_tracked, current_values)
+        frame_count += 1
+
+    if 80 in current_values:
+        road_bump = '1'
+
+    if 79 in current_values:
+        zebra = '1'
 
     with open('answer.txt', 'a') as f:
         f.write(file + ' ' + bridge + city + city_2 + road_bump + screen_wipers + zebra + '\n')
