@@ -1,0 +1,7 @@
+akn.022.008.left.avi 000000
+akn.031.029.left.avi 000101
+akn.031.037.left.avi 000001
+akn.078.031.left.avi 000000
+akn.082.013.left.avi 000000
+akn.082.021.left.avi 000000
+akn.083.014.left.avi 000000

@@ -66,7 +66,7 @@ def blue_mask(frame, current_tracked, current_values):
                 h = max(Y) - min(Y)
                 if abs(angle_1 - 90) < 10 and abs(angle_2 - 90) < 10 and 0.8 < h / w < 1.2:
                     fc = FuckingContour(frame[min(Y):min(Y)+h, min(X):min(X)+w], [min(X), min(Y), w, h])
-                    cv2.drawContours(frame, [approx], 0, (0, 255, 255), 10)
+                    # cv2.drawContours(frame, [approx], 0, (0, 255, 255), 10)
                     current_tracked.append(fc)
     else:
         for contour in contours:
@@ -102,7 +102,7 @@ def blue_mask(frame, current_tracked, current_values):
                             candidate.data = frame[min(Y):min(Y)+h, min(X):min(X)+w]
                             candidate.data_bounds = [min(X), min(Y), w, h]
                             current_tracked.append(candidate)
-                            cv2.drawContours(frame, [approx], 0, (255, 255, 255), 10)
+                            # cv2.drawContours(frame, [approx], 0, (255, 255, 255), 10)
                             flag = True
                             break
                     if not flag:
@@ -128,10 +128,10 @@ def blue_mask(frame, current_tracked, current_values):
             if p < 0.98:
                 continue
 
-            cv2.imshow(str(num), rt)
-            cv2.waitKey()
+            # cv2.imshow(str(num), rt)
+            # cv2.waitKey()
             current_values.append(num)
 
-    cv2.imshow("orig", cv2.resize(frame, (400, 320)))
-    cv2.waitKey(1)
+    # cv2.imshow("orig", cv2.resize(frame, (400, 320)))
+    # cv2.waitKey(1)
     return current_tracked, current_values

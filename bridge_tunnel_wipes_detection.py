@@ -10,9 +10,9 @@ sns.set(color_codes=True)
 
 ####__optical flow parametrs__####
 
-old_gray_frame = 0
-p0 = 0
-searchin_charcts = []
+# old_gray_frame = 0
+# p0 = 0
+# searchin_charcts = []
 # params for ShiTomasi corner detection
 feature_params = dict(maxCorners=100,
                       qualityLevel=0.3,
@@ -40,8 +40,8 @@ def rs(img):
     return cv2.resize(img, (800, 600))
 
 
-def opt_flow2(frame):  # Lucas-Kanade
-    global old_gray_frame, p0, searchin_charcts
+def opt_flow2(frame, old_gray_frame, p0, searchin_charcts):  # Lucas-Kanade
+    # global old_gray_frame, p0, searchin_charcts
     track_length_sum = []
     frame = rs(frame)
     mask = np.zeros_like(frame)
