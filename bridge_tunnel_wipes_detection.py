@@ -7,16 +7,6 @@ from pylab import *
 sns.set(color_codes=True)
 
 # globals()
-bridge = 0
-bump = 0
-count = 1
-text_file = 'C:/Users/janch/PycharmProjects/orange/output_wipes/output5.txt'
-start_time = time.time()
-# directory = 'D:/visionhack/validationset/'
-directory = 'D:/visionhack/testset/'
-r = re.compile(".*avi")
-files = filter(r.match, [f for f in os.listdir(directory)])
-# files = enumerate(files)
 
 ####__optical flow parametrs__####
 
@@ -25,13 +15,13 @@ p0 = 0
 searchin_charcts = []
 # params for ShiTomasi corner detection
 feature_params = dict(maxCorners=100,
-                       qualityLevel=0.3,
-                       minDistance=7,
-                       blockSize=7)
+                      qualityLevel=0.3,
+                      minDistance=7,
+                      blockSize=7)
 # Parameters for lucas kanade optical flow
 lk_params = dict(winSize=(50, 50),
-                  maxLevel=2,
-                  criteria=(cv2.TERM_CRITERIA_EPS | cv2.TERM_CRITERIA_COUNT, 10, 0.03))
+                 maxLevel=2,
+                 criteria=(cv2.TERM_CRITERIA_EPS | cv2.TERM_CRITERIA_COUNT, 10, 0.03))
 # Create some random colors
 color = np.random.randint(0, 255, (100, 3))
 
@@ -48,54 +38,6 @@ def grscl(img):
 
 def rs(img):
     return cv2.resize(img, (800, 600))
-
-
-
-
-'''def persp_transformation(img):
-    x = img.shape[1]
-    y = img.shape[0]
-    img_size = (x, y)
-    source_points = np.float32([
-    [0.117 * x, y],
-    [(0.5 * x) - (x*0.078), (2/3)*y],
-    [(0.5 * x) + (x*0.078), (2/3)*y],
-    [x - (0.117 * x), y]
-    ])
-
-    destination_points = np.float32([
-        [0.25 * x, y],
-        [0.25 * x, 0],
-        [x - (0.25 * x), 0],
-        [x - (0.25 * x), y]
-    ])
-
-    persp_transform = cv2.getPerspectiveTransform(source_points, destination_points)
-    inverse_persp_transform = cv2. getPerspectiveTransform(destination_points, source_points)
-
-    warped_img = cv2.warpPerspective(img, persp_transform, img_size, flags=cv2.INTER_LINEAR)  # ???
-
-    return warped_img, inverse_persp_transform  # warped_img is the result we need
-'''
-
-
-'''def phase_correlate(img, srcs):
-
-    img = cv2.cvtColor(rs(img), cv2.COLOR_BGR2GRAY)
-    center = tuple([int(img.shape[1]/2), int(img.shape[0]/2)])
-    # center = ()
-    src = np.float32(img)
-    if len(srcs) < 2:
-        srcs.append(src)
-    else:
-        srcs.pop()
-        srcs.append(src)
-        shift = cv2.phaseCorrelate(srcs[0], srcs[1])
-        radius = sqrt(shift[0][1]*shift[0][1]+shift[0][0]*shift[0][0])
-        if radius > 0:
-            cv2.circle(img, center, 20, (0,255,0), 10)
-            cv2.line(img, center, (int(center[0]+shift[0][0]), int(center[1]+shift[0][1])), (0,255,0), 10)
-        cv2.imshow('corelated', rs(img))'''
 
 
 def opt_flow2(frame):  # Lucas-Kanade
@@ -141,24 +83,6 @@ def opt_flow2(frame):  # Lucas-Kanade
     old_gray_frame = frame_gray
     p0 = good_new.reshape(-1, 1, 2)
     return 0
-
-
-'''def opt_flow1(frame2, frame1):
-    frame1 = rs(frame1)
-    frame2 = rs(frame2)
-    hsv = np.zeros_like(frame1)
-    hsv[..., 1] = 255
-
-    prvs = cv2.cvtColor(frame1, cv2.COLOR_BGR2GRAY)
-    next = cv2.cvtColor(frame2, cv2.COLOR_BGR2GRAY)
-    flow = cv2.calcOpticalFlowFarneback(prvs, next, None, 0.9, 3, 15, 3, 20, 2, 0)
-
-    mag, ang = cv2.cartToPolar(flow[..., 0], flow[..., 1])
-    hsv[..., 0] = ang * 180 / np.pi / 2
-    hsv[..., 2] = cv2.normalize(mag, None, 0, 255, cv2.NORM_MINMAX)
-    bgr = cv2.cvtColor(hsv, cv2.COLOR_HSV2BGR)
-    cv2.imshow('frame2', bgr)
-    prvs = next'''
 
 
 def bridge_tunnel(img, firsts, seconds, frame_number):
@@ -223,63 +147,3 @@ def bridge_tunnel(img, firsts, seconds, frame_number):
             return 1
 
     return 0
-
-
-def processing(capture):
-    frame_count = capture.get(cv2.CAP_PROP_POS_FRAMES)
-    global p0, old_gray_frame, searchin_charcts
-    old_gray_frame = 0
-    p0 = 0
-    searchin_charcts = []
-    ##########################
-    zebra = 0
-    bridge = 0
-    bump = 0
-    frame_skip = 1
-    wipe = 0
-
-    firsts = []
-    seconds = []
-    while True:
-        try:
-            if frame_count % frame_skip == 0:
-                    ret, frame = capture.read()
-                    if ret:
-                        pass
-                    else:
-                        return '%s00%s%s%s' % (bridge, bump, wipe, zebra)
-                    if opt_flow2(frame) == 1:
-                        wipe = 1
-                    if frame_count % 70 == 0:
-                        old_gray_frame = 0
-                        p0 = 0
-                    if bridge == 0:
-                        if bridge_tunnel(frame, firsts, seconds, frame_count) == 1:
-                            bridge = 1
-                    # cv2.imshow('frame', rs(frame))
-                    # plt.pause(0.05)
-            frame_count += 1
-        except:
-            # print('first_try')
-            return '%s00%s%s%s' % (bridge, bump, wipe, zebra)
-
-
-        if cv2.waitKey(1) & 0xFF == ord('q'):
-            print(-1)
-            break
-        # return '%s0000%s' % (bridge, zebra)
-    return '%s00%s%s%s' % (bridge, bump,wipe, zebra)
-
-
-for file in files:
-    filepath = (directory + file)
-    cap = cv2.VideoCapture(filepath)
-    start_ret, start_frame = cap.read()
-    out = processing(cap)
-    with open(text_file, 'a') as text:
-        text.write("%s %s \n" % (file, out))
-    print('processed № %s file %s  ' % (count, file))
-    count += 1
-
-    cap.release()
-    cv2.destroyAllWindows()
