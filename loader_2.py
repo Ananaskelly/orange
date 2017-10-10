@@ -3,7 +3,6 @@ import re
 import os
 import time
 import detect_sign as detector
-import detect_lines as line_detector
 import prepare_set
 import time
 import numpy as np

@@ -27,7 +27,7 @@ def load_and_process_without_roi(path, is_grayscale=False):
     # cv2.waitKey()
 
     if is_grayscale:
-        img_roi = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+        img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
 
     img_out = np.multiply(img, 1.0 / 255.0)
     return img_out
