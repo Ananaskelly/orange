@@ -12,7 +12,7 @@ saver.restore(sess, './model2/trained_model')
 def get_class_no(img):
     inp = ip.load_and_process_image(img, False)
     inp = inp.reshape(1, 32, 32, 3)
-    cv2.waitKey()
+    # cv2.waitKey()
     prediction = tf.get_default_graph().get_tensor_by_name("softmax:0")
     a = sess.run(prediction, feed_dict={"x:0": inp})
 

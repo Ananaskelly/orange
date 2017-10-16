@@ -1,18 +1,16 @@
 import numpy as np
 import cv2
-import time
-import os, re
+# import time
+# import os, re
 import seaborn as sns
-from pylab import *
 sns.set(color_codes=True)
 
-# globals()
 
 ####__optical flow parametrs__####
 
-# old_gray_frame = 0
-# p0 = 0
-# searchin_charcts = []
+old_gray_frame = 0
+p0 = 0
+searchin_charcts = []
 # params for ShiTomasi corner detection
 feature_params = dict(maxCorners=100,
                       qualityLevel=0.3,
@@ -40,8 +38,8 @@ def rs(img):
     return cv2.resize(img, (800, 600))
 
 
-def opt_flow2(frame, old_gray_frame, p0, searchin_charcts):  # Lucas-Kanade
-    # global old_gray_frame, p0, searchin_charcts
+def opt_flow2(frame, frame_count):  # Lucas-Kanade
+    global old_gray_frame, p0, searchin_charcts
     track_length_sum = []
     frame = rs(frame)
     mask = np.zeros_like(frame)
@@ -50,7 +48,7 @@ def opt_flow2(frame, old_gray_frame, p0, searchin_charcts):  # Lucas-Kanade
         old_gray_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
     else:
         pass
-    if p0 is 0:
+    if p0 is 0 or p0.size == 0:
         p0 = cv2.goodFeaturesToTrack(old_gray_frame, mask=None, **feature_params)
     else:
         pass
@@ -71,22 +69,28 @@ def opt_flow2(frame, old_gray_frame, p0, searchin_charcts):  # Lucas-Kanade
         if deltax + deltay >= 80:
             track_length_sum.append(deltax+deltay)
 
-    if sum(track_length_sum) > 750 and len(track_length_sum) >= 7:
-        searchin_charcts.append(len(track_length_sum))
-        # print(len(track_length_sum))
-        if len(searchin_charcts) >= 3:
-            return 1
-    # todo подумать о пропуске и обрезке кадров
-    img = cv2.add(frame, mask)
+    # img = cv2.add(frame, mask)
     # cv2.imshow('frame', img)
     # cv2.imshow('p0', mask)
-    old_gray_frame = frame_gray
-    p0 = good_new.reshape(-1, 1, 2)
+
+    if sum(track_length_sum) > 800 and len(track_length_sum) >= 8:
+        searchin_charcts.append(len(track_length_sum))
+        print(len(track_length_sum))
+        if len(searchin_charcts) >= 2:
+            searchin_charcts = []
+            return 1
+    # todo подумать о пропуске и обрезке кадров
+
+    if frame_count % 70 == 0:
+        old_gray_frame = 0
+        p0 = 0
+    else:
+        old_gray_frame = frame_gray
+        p0 = good_new.reshape(-1, 1, 2)
     return 0
 
 
 def bridge_tunnel(img, firsts, seconds, frame_number):
-    # ion()
     x = img.shape[1]
     y = img.shape[0]
     mask = np.zeros(img.shape[:2], np.uint8)
@@ -98,9 +102,6 @@ def bridge_tunnel(img, firsts, seconds, frame_number):
                          (int(1 * x / 6), int(y / 10)), (255, 255, 255), -1)
     mask = cv2.rectangle(mask, (int(5*x/6), 0),
                          (int(x), int(y / 10)), (255, 255, 255), -1)
-    # mask[int(100):300, # y len
-    # int(100): 300] = 255
-    # cv2.imshow('mask', rs(mask))
     chunk_size = 6
     # img = rs(img)
     hist_full = cv2.calcHist([img], [0], mask, [30], [0, 30])
@@ -118,32 +119,11 @@ def bridge_tunnel(img, firsts, seconds, frame_number):
                 seconds.append(firsts.pop(0))
             firsts.append(len(nums))
 
-    # if (frame_number > chunk_size * 2) & (len(seconds) < chunk_size):
-    #     seconds.append(len(nums))
-    # else:
-    #     if frame_number > chunk_size * 2:
-    #         seconds.pop(0)
-    #         seconds.append(len(nums))
-
     if (len(firsts)) == chunk_size & len(seconds) == chunk_size:
         if abs(sum(firsts) - sum(seconds)) > 13:
-            # cv2.imshow('orig', rs(img))
-            # print('trololololo')
-            # for hists in hist_full:
-            #     enumerate([hists[0] > 1000])
-            # enumerate(hist_full> 1000)
-            # plot(hist_full)
-            # cv2.imshow('hist', hist_full)
-            # ion()
-            color = ('b', 'g', 'r')
-            img = rs(img)
-            for i, col in enumerate(color):
-                histr = cv2.calcHist([img], [i], None, [256], [0, 256])
+            # color = ('b', 'g', 'r')
+            # img = rs(img)
 
-                # plt.xlim([0, 256])
-            # plot(histr, color=col)
-            # draw()
-            # plt.show()
             return 1
 
     return 0

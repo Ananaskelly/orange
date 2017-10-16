@@ -7,7 +7,8 @@ import detect_sign as sign_detector
 import bridge_tunnel_wipes_detection as jan_detector
 
 
-directory = 'D:\\visionhack\\trainset\\trainset\\'
+# directory = 'D:\\visionhack\\trainset\\'
+directory = 'D:\\visionhack\\testset\\'
 r = re.compile(".*avi")
 
 
@@ -24,9 +25,9 @@ def processing(cap):
     zebra = '0'
     current_tracked = []
     current_values = []
-    old_gray_frame = 0
-    p0 = 0
-    searchin_charcts = []
+    jan_detector.old_gray_frame = 0
+    jan_detector.p0 = 0
+    jan_detector.searchin_charcts = []
     firsts = []
     seconds = []
     while cap.isOpened():
@@ -36,16 +37,17 @@ def processing(cap):
 
         current_tracked, current_values = sign_detector.blue_mask(frame, current_tracked, current_values)
 
-        if jan_detector.opt_flow2(frame, old_gray_frame, p0, searchin_charcts) == 1:
+        if jan_detector.opt_flow2(frame, frame_count) == 1:
             screen_wipers = '1'
-        if frame_count % 70 == 0:
-            old_gray_frame = 0
-            p0 = 0
-        if bridge == 0:
+
+        if bridge == '0':
             if jan_detector.bridge_tunnel(frame, firsts, seconds, frame_count) == 1:
                 bridge = '1'
 
         frame_count += 1
+        if cv2.waitKey(1) & 0xFF == ord('q'):
+            print(-1)
+            break
 
     if 80 in current_values:
         road_bump = '1'
@@ -55,6 +57,7 @@ def processing(cap):
 
     with open('answer.txt', 'a') as f:
         f.write(file + ' ' + bridge + city + city_2 + road_bump + screen_wipers + zebra + '\n')
+
     cap.release()
     cv2.destroyAllWindows()
 

@@ -1,5 +1,5 @@
 
-file_path = 'D:/visionhack/trainset/trainset/train.txt'
+file_path = 'D:\\visionhack\\trainset\\train.txt'
 
 answers = {}
 assoc = {
